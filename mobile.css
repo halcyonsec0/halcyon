@@ -80,15 +80,24 @@
         padding: 20px !important;
     }
 
-    /* Popup adjustments */
+    /* Popup adjustments - Modified for horizontal social buttons */
     .popup-container {
         width: 90% !important;
         padding: 20px !important;
     }
 
     .social-enroll {
-        flex-direction: column;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center;
         gap: 15px !important;
+        margin: 20px 0 !important;
+        flex-wrap: wrap;
+    }
+
+    .social-icon {
+        font-size: 2.5rem !important;
+        margin: 0 5px !important;
     }
 
     /* Footer adjustments */
@@ -123,5 +132,14 @@
     .btn, .btn-primary {
         padding: 10px 20px !important;
         font-size: 14px !important;
+    }
+
+    /* Adjust social buttons for very small screens */
+    .social-enroll {
+        gap: 10px !important;
+    }
+
+    .social-icon {
+        font-size: 2rem !important;
     }
 }
