@@ -428,47 +428,111 @@
   <div style="display: flex; justify-content: center;">
     <div style="position: relative; max-width: 1227px; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 162, 139, 0.3);">
       
-      <video id="customVideo" style="width: 100%; background-color: #2d3748;" preload="metadata">
-        <source src="trailer.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-	
-      <div id="playButton" style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 4rem;
-        color: #009780;
-        cursor: pointer;
-        z-index: 10;
-      ">
-        <i class="fas fa-play"></i>
+      <!-- YouTube Player Container - Will auto-adjust to video's native resolution -->
+      <div id="youtubeContainer" style="width: 100%; height: 0; padding-bottom: 56.25%; /* 16:9 fallback */ position: relative; background-color: #2d3748;">
+        <iframe id="youtubeIframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+          src="https://www.youtube.com/embed/gJpqTCn3AuA?enablejsapi=1&controls=0&rel=0&modestbranding=1"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
       </div>
-
-      <div id="controls" style="
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px;
-        color: rgb(144, 255, 164);
-        z-index: 5;
-      ">
-        <button id="togglePlay" style="background: none; border: none; color: #00A28B; font-size: 1.5rem;">
-          <i class="fas fa-play"></i>
-        </button>
-        <input type="range" id="seekBar" value="0" style="flex-grow: 1; margin: 0 10px;" />
-        <button id="fullscreen" style="background: none; border: none; color: #00A28B; font-size: 1.3rem;">
-          <i class="fas fa-expand"></i>
-        </button>
+	
+      
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  // YouTube Player API integration
+  let player;
+  const videoId = 'gJpqTCn3AuA';
+  
+  // Load YouTube API
+  function loadYouTubeAPI() {
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  }
+  
+  // Initialize player
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtubeIframe', {
+      events: {
+        'onReady': onPlayerReady,
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+  
+  function onPlayerReady(event) {
+    // Set initial quality to highest available
+    event.target.setPlaybackQuality('hd1080');
+    setupCustomControls();
+  }
+  
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.ENDED) {
+    document.querySelector('#testimonials').scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+  
+  function setupCustomControls() {
+    const playButton = document.getElementById('playButton');
+    const togglePlay = document.getElementById('togglePlay');
+    const seekBar = document.getElementById('seekBar');
+    const fullscreen = document.getElementById('fullscreen');
+    
+    playButton.addEventListener('click', () => {
+      player.playVideo();
+      player.setPlaybackQuality('hd1080'); // Ensure high quality
+    });
+    
+    togglePlay.addEventListener('click', () => {
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+        player.setPlaybackQuality('hd1080');
+      }
+    });
+    
+    seekBar.addEventListener('input', () => {
+      const seekTo = player.getDuration() * (seekBar.value / 100);
+      player.seekTo(seekTo, true);
+    });
+    
+    fullscreen.addEventListener('click', () => {
+      const iframe = document.getElementById('youtubeIframe');
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+      } else if (iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen();
+      }
+    });
+  }
+  
+  function updateSeekBar() {
+    if (player && player.getDuration) {
+      const seekBar = document.getElementById('seekBar');
+      const duration = player.getDuration();
+      const currentTime = player.getCurrentTime();
+      
+      if (duration > 0) {
+        seekBar.value = (currentTime / duration) * 100;
+      }
+      
+      if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+        requestAnimationFrame(updateSeekBar);
+      }
+    }
+  }
+  
+  // Start loading the API
+  loadYouTubeAPI();
+</script>
 
 <script>
   const video = document.getElementById("customVideo");
@@ -503,9 +567,11 @@
   });
 
 
-  video.addEventListener("timeupdate", () => {
-    seekBar.value = (video.currentTime / video.duration) * 100;
-  });
+  video.addEventListener("ended", () => {
+  togglePlay.innerHTML = '<i class="fas fa-play"></i>';
+  document.querySelector('#testimonials').scrollIntoView({ behavior: 'smooth' });
+});
+
 
   seekBar.addEventListener("input", () => {
     video.currentTime = (seekBar.value / 100) * video.duration;
